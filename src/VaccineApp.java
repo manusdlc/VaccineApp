@@ -21,25 +21,24 @@ public class VaccineApp {
     }
 
     private static void displayMenu() {
-        System.out.println("VaccineApp Main Menu");
-        System.out.println("0. Exit");
-        System.out.println("1. Add a Patient");
-        System.out.println("2. Assign Slot to Patient");
-        System.out.println("3. Enter vaccination information");
-        System.out.println("Please select your option: ");
+        System.out.println("\n" + "VaccineApp Main Menu");
+        System.out.println("    0. Exit");
+        System.out.println("    1. Add a new patient");
+        System.out.println("    2. Assign a slot to a patient");
+        System.out.println("    3. Enter vaccination information");
+        System.out.print("Please select your option: ");
     }
 
     private static void addPatient() throws SQLException {
         System.out.print("    Health Insurance Number: ");
         String hInsurNum = "\'" + in.nextLine() + "\'";
 
-        int numRecords = 0;
+        boolean isRecord = false;
         boolean insert = true;
-        boolean modify = false;
+        boolean update = false;
         try {
-            ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM patient WHERE hInsurNum = " + hInsurNum);
-            rs.next();
-            numRecords = rs.getInt(1);
+            ResultSet rs = s.executeQuery("SELECT hInsurNum FROM patient WHERE hInsurNum = " + hInsurNum);
+            isRecord = rs.next();
         } catch (SQLException e) {
             sqlCode = e.getErrorCode();
             sqlState = e.getSQLState();
@@ -48,19 +47,19 @@ public class VaccineApp {
             System.out.println(e);
         }
 
-        if (numRecords > 0) {
+        if (isRecord) {
             insert = false;
             System.out.println("The patient with number " + hInsurNum + " is already registered." +
                     " Do you wish to update its personal information?");
             String isUpdate = in.nextLine();
-            if (isUpdate.equals("y")) {
-                modify = true;
+            if (isUpdate.equals("Yes")) {
+                update = true;
             } else {
-                modify = false;
+                update = false;
             }
         }
 
-        if (insert || modify) {
+        if (insert || update) {
             System.out.print("    Full name: ");
             String pname = "\'" + in.nextLine() + "\'";
             System.out.print("    Street address: ");
@@ -85,7 +84,7 @@ public class VaccineApp {
                 patientOperation += "INSERT INTO patient VALUES (" + hInsurNum + "," + pname + "," + streetAddress
                         + "," + city + "," + postalCode + "," + phone + "," + gender + "," + birthDate
                         + "," + registrationDate + "," + category + ")";
-            } else if (modify) {
+            } else if (update) {
                 patientOperation += "UPDATE patient " +
                         "SET pname = " + pname + ", streetAddress = " + streetAddress + ", city = " + city
                         + ", postalCode = " + postalCode + ", phone = " + phone + ", gender = " + gender
@@ -108,26 +107,31 @@ public class VaccineApp {
     }
 
     private static void assignSlot() {
-        System.out.println("Location: ");
-        String location = "'" + in.nextLine() + "', ";
-        System.out.println("Room number: ");
+        System.out.print("    Location: ");
+        String location = "\'" + in.nextLine() + "\'";
+        System.out.print("    Room number: ");
         String roomNum = in.nextLine();
-        System.out.println("Vaccination Day: ");
-        String vaccDate = "'" + in.nextLine() + "', ";
-        System.out.println("Time: ");
-        String time = "'" + in.nextLine() + "', ";
-        System.out.println("Health Insurance Number: ");
-        String hInsurNum = "'" + in.nextLine() + "', ";
-        System.out.println("Assignment Date: ");
-        String assignmentDate = "'" + in.nextLine() + "'";
+        System.out.print("    Vaccination Day: ");
+        String vaccDate = "\'" + in.nextLine() + "\'";
+        System.out.print("    Time: ");
+        String time = "\'" + in.nextLine() + "\'";
 
-        String assignSlot = "INSERT INTO slot VALUES (" + location + roomNum + vaccDate
-                + time + hInsurNum + assignmentDate + ")";
-
+        //Check if the slot is free
+        boolean insert = true;
+        boolean update = false;
+        boolean isFree = true;
         try {
-            s.executeUpdate(assignSlot);
-            System.out.println("DONE: " + "," + location + "," + roomNum + "," + vaccDate
-                    + "," + time + "," + " was assigned to " + "," + hInsurNum);
+            ResultSet rs = s.executeQuery("SELECT hInsurNum FROM slot WHERE location = " + location
+            + " AND roomNum = " + roomNum + " AND vaccDate = " + vaccDate + " AND time = " + time);
+            if (rs.next()) {
+                insert = false;
+                update = true;
+                Object patient = rs.getObject("hInsurNum");
+                if (patient != null) {
+                    isFree = false;
+                    System.out.println("This slot is has already been assigned to patient " + (String) patient);
+                }
+            }
         } catch (SQLException e) {
             sqlCode = e.getErrorCode();
             sqlState = e.getSQLState();
@@ -135,27 +139,74 @@ public class VaccineApp {
             System.out.println("Code: " + sqlCode + "  sqlState: " + sqlState);
             System.out.println(e);
         }
+
+        if (isFree) {
+            System.out.print("    Health Insurance Number: ");
+            String hInsurNum = "\'" + in.nextLine() + "\'";
+
+            //Check if patient has already received two doses
+            int dosesReceived = 0;
+            try {
+                ResultSet rs = s.executeQuery("SELECT COUNT(*) FROM vial WHERE hInsurNum = " + hInsurNum);
+                rs.next();
+                dosesReceived = rs.getInt(1);
+            } catch (SQLException e){
+                sqlCode = e.getErrorCode();
+                sqlState = e.getSQLState();
+
+                System.out.println("Code: " + sqlCode + "  sqlState: " + sqlState);
+                System.out.println(e);
+            }
+
+            if (dosesReceived < 2) {
+                System.out.print("    Assignment Date: ");
+                String assignmentDate = "\'" + in.nextLine() + "\'";
+
+                String assignSlot = "";
+                if (insert) {
+                    assignSlot += "INSERT INTO slot VALUES (" + location + ", " + roomNum + ", " + vaccDate
+                            + ", " + time + ", " + hInsurNum + ", " + assignmentDate + ")";
+                } else if (update) {
+                    assignSlot += "UPDATE slot " +
+                            "SET hInsurNum = " + hInsurNum + ", assignmentDate = " + assignmentDate
+                            + " WHERE location = " + location + " AND roomNum = " + roomNum
+                            + " AND vaccDate = " + vaccDate + " AND time = " + time;
+                }
+
+                try {
+                    s.executeUpdate(assignSlot);
+                    System.out.println("DONE: " + "," + location + "," + roomNum + "," + vaccDate
+                            + "," + time + "," + " was assigned to " + "," + hInsurNum);
+                } catch (SQLException e) {
+                    sqlCode = e.getErrorCode();
+                    sqlState = e.getSQLState();
+
+                    System.out.println("Code: " + sqlCode + "  sqlState: " + sqlState);
+                    System.out.println(e);
+                }
+            } else System.out.println("Patient " + hInsurNum + " has already received the necessary doses");
+        }
     }
 
     private static void enterVaccinationInformation() {
         System.out.println("Vaccine: ");
-        String vaccine = "'" + in.nextLine() + "', ";
+        String vaccine = "'" + in.nextLine() + "'";
         System.out.println("Batch number: ");
         String batchNum = in.nextLine();
         System.out.println("Vial number: ");
         String vialNum = in.nextLine();
         System.out.println("Health Insurance Number: ");
-        String hInsurNum = "'" + in.nextLine() + "', ";
+        String hInsurNum = "'" + in.nextLine() + "'";
         System.out.println("Canadian Nurse License Number: ");
-        String caNurLicNum = "'" + in.nextLine() + "', ";
+        String caNurLicNum = "'" + in.nextLine() + "'";
         System.out.println("Location: ");
-        String location = "'" + in.nextLine() + "', ";
+        String location = "'" + in.nextLine() + "'";
         System.out.println("Room number: ");
         String roomNum = in.nextLine();
         System.out.println("Vaccination date: ");
-        String vaccDate = "'" + in.nextLine() + "', ";
+        String vaccDate = "'" + in.nextLine() + "'";
         System.out.println("Time: ");
-        String time = "'" + in.nextLine() + "', ";
+        String time = "'" + in.nextLine() + "'";
 
 
         String enterVial = "INSERT INTO slot VALUES (" + vaccine + batchNum + vialNum + hInsurNum + caNurLicNum
@@ -182,6 +233,7 @@ public class VaccineApp {
         while (!isExit()) {
             displayMenu();
             menuOption = Integer.parseInt(in.nextLine());
+            System.out.println();
 
             switch (menuOption) {
                 case 1:
