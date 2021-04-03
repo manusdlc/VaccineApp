@@ -49,7 +49,7 @@ public class VaccineApp {
 
         if (isRecord) {
             insert = false;
-            System.out.println("The patient with number " + hInsurNum + " is already registered." +
+            System.out.println("\n" + "The patient with number " + hInsurNum + " is already registered." +
                     " Do you wish to update its personal information?");
             String isUpdate = in.nextLine();
             if (isUpdate.equals("Yes")) {
@@ -95,7 +95,7 @@ public class VaccineApp {
 
             try {
                 s.executeUpdate(patientOperation);
-                System.out.println("DONE: " + pname + " was inserted/modified into the database");
+                System.out.println("\n" + "DONE: " + pname + " was inserted/modified into the database");
             } catch (SQLException e) {
                 sqlCode = e.getErrorCode();
                 sqlState = e.getSQLState();
@@ -106,7 +106,9 @@ public class VaccineApp {
         }
     }
 
-    private static void assignSlot() {
+    private static void assignSlot() throws SQLException {
+        System.out.print("    Health Insurance Number: ");
+        String hInsurNum = "\'" + in.nextLine() + "\'";
         System.out.print("    Location: ");
         String location = "\'" + in.nextLine() + "\'";
         System.out.print("    Room number: ");
@@ -129,7 +131,8 @@ public class VaccineApp {
                 Object patient = rs.getObject("hInsurNum");
                 if (patient != null) {
                     isFree = false;
-                    System.out.println("This slot is has already been assigned to patient " + (String) patient);
+                    System.out.println("\n" + "Impossible: this slot is has already been assigned to patient "
+                            + (String) patient);
                 }
             }
         } catch (SQLException e) {
@@ -141,9 +144,6 @@ public class VaccineApp {
         }
 
         if (isFree) {
-            System.out.print("    Health Insurance Number: ");
-            String hInsurNum = "\'" + in.nextLine() + "\'";
-
             //Check if patient has already received two doses
             int dosesReceived = 0;
             try {
@@ -158,7 +158,25 @@ public class VaccineApp {
                 System.out.println(e);
             }
 
-            if (dosesReceived < 2) {
+            int requiredDoses = Integer.MAX_VALUE;
+            try {
+                ResultSet rs_vac = s.executeQuery("SELECT vaccine FROM vial WHERE hInsurNum = " + hInsurNum);
+                if (rs_vac.next()) {
+                    ResultSet rs_doses = s.executeQuery("SELECT doses FROM vaccine WHERE vname ="
+                            + "\'" + rs_vac.getString(1) + "\'");
+                    rs_doses.next();
+                    requiredDoses = rs_doses.getInt(1);
+                }
+            } catch (SQLException e){
+                sqlCode = e.getErrorCode();
+                sqlState = e.getSQLState();
+
+                System.out.println("Code: " + sqlCode + "  sqlState: " + sqlState);
+                System.out.println(e);
+            }
+
+
+            if (dosesReceived < requiredDoses) {
                 System.out.print("    Assignment Date: ");
                 String assignmentDate = "\'" + in.nextLine() + "\'";
 
@@ -175,7 +193,7 @@ public class VaccineApp {
 
                 try {
                     s.executeUpdate(assignSlot);
-                    System.out.println("DONE: " + "," + location + "," + roomNum + "," + vaccDate
+                    System.out.println("\n" + "DONE: " + "," + location + "," + roomNum + "," + vaccDate
                             + "," + time + "," + " was assigned to " + "," + hInsurNum);
                 } catch (SQLException e) {
                     sqlCode = e.getErrorCode();
@@ -184,44 +202,65 @@ public class VaccineApp {
                     System.out.println("Code: " + sqlCode + "  sqlState: " + sqlState);
                     System.out.println(e);
                 }
-            } else System.out.println("Patient " + hInsurNum + " has already received the necessary doses");
+            } else System.out.println("Patient " + hInsurNum + " has already received the necessary " +
+                    "number of doses (" + requiredDoses + ")");
         }
     }
 
-    private static void enterVaccinationInformation() {
-        System.out.println("Vaccine: ");
-        String vaccine = "'" + in.nextLine() + "'";
-        System.out.println("Batch number: ");
+    private static void enterVaccinationInformation() throws SQLException {
+        System.out.print("    Vaccine: ");
+        String vaccine = "\'" + in.nextLine() + "\'";
+        System.out.print("    Batch number: ");
         String batchNum = in.nextLine();
-        System.out.println("Vial number: ");
+        System.out.print("    Vial number: ");
         String vialNum = in.nextLine();
-        System.out.println("Health Insurance Number: ");
-        String hInsurNum = "'" + in.nextLine() + "'";
-        System.out.println("Canadian Nurse License Number: ");
-        String caNurLicNum = "'" + in.nextLine() + "'";
-        System.out.println("Location: ");
-        String location = "'" + in.nextLine() + "'";
-        System.out.println("Room number: ");
-        String roomNum = in.nextLine();
-        System.out.println("Vaccination date: ");
-        String vaccDate = "'" + in.nextLine() + "'";
-        System.out.println("Time: ");
-        String time = "'" + in.nextLine() + "'";
+        System.out.print("    Canadian Nurse License Number: ");
+        String caNurLicNum = "\'" + in.nextLine() + "\'";
+        System.out.print("    Health Insurance Number: ");
+        String hInsurNum = "\'" + in.nextLine() + "\'";
 
-
-        String enterVial = "INSERT INTO slot VALUES (" + vaccine + batchNum + vialNum + hInsurNum + caNurLicNum
-                + location + roomNum + vaccDate + time + ")";
-
+        //Check if patient is being administered the same type of vaccine
+        boolean isSameVaccine = true;
         try {
-            s.executeUpdate(enterVial);
-            System.out.println("DONE: " + "," + vaccine + " was administered to " + hInsurNum
-                    + " at " + roomNum + "," + location + " on " + vaccDate + ", " + time);
+            ResultSet rs = s.executeQuery("SELECT vaccine FROM vial WHERE hInsurNum = " + hInsurNum);
+            if (rs.next() && !rs.getString(1).equals(vaccine)) {
+                System.out.println("\n" + "Impossible: this patient has already received a dose of another vaccine");
+                isSameVaccine = false;
+            }
         } catch (SQLException e) {
             sqlCode = e.getErrorCode();
             sqlState = e.getSQLState();
 
             System.out.println("Code: " + sqlCode + "  sqlState: " + sqlState);
             System.out.println(e);
+        }
+
+        if (isSameVaccine) {
+            System.out.print("    Location: ");
+            String location = "\'" + in.nextLine() + "\'";
+            System.out.print("    Room number: ");
+            String roomNum = in.nextLine();
+            System.out.print("    Vaccination date: ");
+            String vaccDate = "\'" + in.nextLine() + "\'";
+            System.out.print("    Time: ");
+            String time = "\'" + in.nextLine() + "\'";
+
+
+            String enterVial = "INSERT INTO vial VALUES (" + vaccine + ", " + batchNum + ", " + vialNum + ", "
+                    + hInsurNum + ", " + caNurLicNum + ", " + location + ", " + roomNum + ", " + vaccDate
+                    + ", " + time + ")";
+
+            try {
+                s.executeUpdate(enterVial);
+                System.out.println("\n" + "DONE: " + vaccine + " was administered to " + hInsurNum
+                        + " at " + roomNum + "," + location + " on " + vaccDate + ", " + time);
+            } catch (SQLException e) {
+                sqlCode = e.getErrorCode();
+                sqlState = e.getSQLState();
+
+                System.out.println("Code: " + sqlCode + "  sqlState: " + sqlState);
+                System.out.println(e);
+            }
         }
     }
 
