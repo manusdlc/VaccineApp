@@ -4,12 +4,12 @@ Design of a database for managing a vaccination program and Java App for interac
 ## Design
 
 
-###ER Model
+### ER Model
 
-![VaccineApp_ER-model](https://user-images.githubusercontent.com/59484319/113484930-3ede3300-94ab-11eb-8209-5b7adc4c6c8d.jpg)
+![VaccineApp_ER-model](https://user-images.githubusercontent.com/59484319/113494594-f98d2600-94e9-11eb-82de-4b872e9b30af.jpg)
 
 
-###Relational Model
+### Relational Model
 
 * batch(vaccine, batchNum, expiryDate, manufacDate, numVials, location)
   - vaccine foreign key ref vaccine(vname)
