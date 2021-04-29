@@ -82,7 +82,7 @@ Design of a database for managing a vaccination program and Java App for interac
 ### Administering a different vaccine
 ![different_vaccine](https://user-images.githubusercontent.com/59484319/116591317-f5083180-a91e-11eb-8cdb-d23549abb588.png)
 
-### Number of vaccinations per day for a period of time
+### Data query & plot
 ![chart](https://user-images.githubusercontent.com/59484319/116591860-9d1dfa80-a91f-11eb-8207-33b0a6b7a2e5.png)
 
 
