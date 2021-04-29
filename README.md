@@ -57,3 +57,34 @@ Design of a database for managing a vaccination program and Java App for interac
 
 * Administer dose
   - Check if the vaccine getting administered is the same as the vaccine in previous administered doses, if any.
+
+## Interaction Demo
+
+### Adding a patient
+![adding_patient](https://user-images.githubusercontent.com/59484319/116590758-6bf0fa80-a91e-11eb-8857-6440f4132e5e.png)
+
+
+### Updating a patient
+![updating_patient](https://user-images.githubusercontent.com/59484319/116590942-980c7b80-a91e-11eb-85ee-58bfcd586c4b.png)
+
+### Assigning a slot
+![assigning_slot](https://user-images.githubusercontent.com/59484319/116590969-a195e380-a91e-11eb-9635-8d790e9bb711.png)
+
+### Assigning an occupied slot
+![slot_already_assigned](https://user-images.githubusercontent.com/59484319/116591043-b3778680-a91e-11eb-8173-268ac5b110db.png)
+
+### Administering a dose
+![administering_dose](https://user-images.githubusercontent.com/59484319/116591126-c8ecb080-a91e-11eb-9073-63b4edadfe8e.png)
+
+### Administering an extra dose
+![number_of_doses](https://user-images.githubusercontent.com/59484319/116591204-db66ea00-a91e-11eb-92e4-fafaaaa43d1a.png)
+
+### Administering a different vaccine
+![different_vaccine](https://user-images.githubusercontent.com/59484319/116591317-f5083180-a91e-11eb-8cdb-d23549abb588.png)
+
+### Number of vaccinations per day for a period of time
+![chart](https://user-images.githubusercontent.com/59484319/116591860-9d1dfa80-a91f-11eb-8207-33b0a6b7a2e5.png)
+
+
+
+
